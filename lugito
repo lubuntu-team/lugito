@@ -84,21 +84,6 @@ def main():
             taskexists = False
 
         if taskexists:
-            # Let's get the title of the task
-            titles = []
-            for i in tasksearch:
-                if i["type"] == "title":
-                    titles.append(i)
-
-            # We need some special casing in case this also renames the task title (to choose the new one, i.e. with a higher ID)
-            if len(titles) == 1:
-                title = titles[0]
-            elif len(titles) == 2:
-                if titles[0]["id"] > titles[1]["id"]:
-                    title = titles[0]["fields"]["new"]
-                else:
-                    title = titles[1]["fields"]["new"]
-
             commentid = None
             # Let's see if this was a comment and if it's just an edit
             for task in tasksearch:
