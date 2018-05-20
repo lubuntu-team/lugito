@@ -85,6 +85,7 @@ def main():
 
         if taskexists:
             commentid = None
+            edited = False
             # Let's see if this was a comment and if it's just an edit
             for task in tasksearch:
                 dataepoch = data["action"]["epoch"]
@@ -99,6 +100,19 @@ def main():
                 else:
                     comment = False
 
+            newcomment = False
+            epoch = False
+            if not comment and not edited:
+                for task in tasksearch:
+                    if epoch:
+                        if task["dateCreated"] == task["dateModified"] and task["dateCreated"] == epoch:
+                            newcomment = True
+                        else:
+                            newcomment = False
+                            break
+                    else:
+                        epoch = task["dateCreated"]
+
             # We should also know who did this thing
             userlookup = tasksearch[0]["authorPHID"]
             who = dict(phab.phid.query(phids=[userlookup]))[userlookup]["fullName"]
@@ -107,10 +121,12 @@ def main():
                 fulltaskname = phab.phid.query(phids=[data["object"]["phid"]])[data["object"]["phid"]]["fullName"]
                 link = "\x032" + phab.phid.query(phids=[data["object"]["phid"]])[data["object"]["phid"]]["uri"] + "#" + str(commentid) + "\x03"
                 message = "\x033[\x03\x0313"+ fulltaskname +"\x03\x033]\x03 \x0315" + str(who) + "\x03 "
-                if edited == False:
+                if comment == True and edited = False:
                     message = message + "commented on the task: " + link
                 elif edited == True:
                     message = message + "edited a message on the task: " + link
+                elif newcomment == True:
+                    message = message + "just created this task: " + link
                 sendnotice(message)
 
         return "OK"
