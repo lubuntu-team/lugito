@@ -97,6 +97,7 @@ def main():
                         edited = True
                     else:
                         edited = False
+                    break
                 else:
                     comment = False
 
