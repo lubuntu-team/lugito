@@ -84,35 +84,37 @@ def main():
             taskexists = False
 
         if taskexists:
-            commentid = None
-            edited = False
-            # Let's see if this was a comment and if it's just an edit
-            for task in tasksearch:
-                dataepoch = data["action"]["epoch"]
-                datemodified = task["dateModified"]
-                if datemodified >= (dataepoch - 10) and datemodified <= (dataepoch + 10) and task["comments"] != []:
-                    comment = True
-                    commentid = task["id"]
-                    if datemodified != task["dateCreated"]:
-                        edited = True
-                    else:
-                        edited = False
-                    break
-                else:
-                    comment = False
-
+            # First, let's see if it's a new task
             newcomment = False
             epoch = False
-            if not comment and not edited:
-                for task in tasksearch:
-                    if epoch:
-                        if task["dateCreated"] == task["dateModified"] and task["dateCreated"] == epoch:
-                            newcomment = True
-                        else:
-                            newcomment = False
-                            break
+            for task in tasksearch:
+                if epoch:
+                    if task["dateCreated"] == task["dateModified"] and task["dateCreated"] == epoch:
+                        newcomment = True
                     else:
-                        epoch = task["dateCreated"]
+                        newcomment = False
+                        break
+                else:
+                    epoch = task["dateCreated"]
+
+            # If it's not a new task, let's see if it's a comment, and if it's just an edit
+            if not newcomment:
+                commentid = None
+                edited = False
+                for task in tasksearch:
+                    dataepoch = data["action"]["epoch"]
+                    datemodified = task["dateModified"]
+                    if datemodified >= (dataepoch - 10) and datemodified <= (dataepoch + 10) and task["comments"] != []:
+                        comment = True
+                        commentid = task["id"]
+                        if datemodified != task["dateCreated"]:
+                            edited = True
+                        else:
+                            edited = False
+                        break
+                    else:
+                        comment = False
+
 
             # We should also know who did this thing
             userlookup = tasksearch[0]["authorPHID"]
