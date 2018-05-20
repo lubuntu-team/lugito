@@ -84,6 +84,7 @@ def main():
             taskexists = False
 
         if taskexists:
+            print("Task exists, checking to see if it's new.")
             # First, let's see if it's a new task
             newcomment = False
             epoch = False
@@ -92,10 +93,14 @@ def main():
                     if task["dateCreated"] == task["dateModified"] and task["dateCreated"] == epoch:
                         newcomment = True
                     else:
+                        print("Nope, not new.")
                         newcomment = False
                         break
                 else:
                     epoch = task["dateCreated"]
+
+            if newcomment:
+                print("Yes, it's a new comment.")
 
             # If it's not a new task, let's see if it's a comment, and if it's just an edit
             if not newcomment:
@@ -130,6 +135,7 @@ def main():
                     message = message + "edited a message on the task: " + link
                 elif newcomment == True:
                     message = message + "just created this task: " + link
+                print(message)
                 sendnotice(message)
 
         return "OK"
