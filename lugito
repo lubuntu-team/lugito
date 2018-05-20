@@ -85,58 +85,55 @@ def main():
 
         if taskexists:
             print("Task exists, checking to see if it's new.")
-            # First, let's see if it's a new task
-            newcomment = False
-            epoch = False
-            for task in tasksearch:
-                if epoch:
-                    if task["dateCreated"] == task["dateModified"] and task["dateCreated"] == epoch:
-                        newcomment = True
-                    else:
-                        print("Nope, not new.")
-                        newcomment = False
-                        break
-                else:
-                    epoch = task["dateCreated"]
-
-            if newcomment:
-                print("Yes, it's a new comment.")
+            newtask = isnewtask(tasksearch)
+            if newtask:
+                print("Yes, it's a new task.")
+            else:
+                print("No, it's not a new task.")
 
             # If it's not a new task, let's see if it's a comment, and if it's just an edit
-            if not newcomment:
+            comment = None
+            commentid = None
+            edited = None
+            if not newtask:
                 commentid = None
                 edited = False
                 for task in tasksearch:
                     dataepoch = data["action"]["epoch"]
                     datemodified = task["dateModified"]
                     if datemodified >= (dataepoch - 10) and datemodified <= (dataepoch + 10) and task["comments"] != []:
+                        print("It's a comment, yes.")
                         comment = True
                         commentid = task["id"]
                         if datemodified != task["dateCreated"]:
+                            print("The comment was edited.")
                             edited = True
                         else:
+                            print("The comment was NOT edited.")
                             edited = False
                         break
                     else:
                         comment = False
 
-
             # We should also know who did this thing
             userlookup = tasksearch[0]["authorPHID"]
             who = dict(phab.phid.query(phids=[userlookup]))[userlookup]["fullName"]
 
-            if isnewtask(tasksearch) is False and commentid is not None:
-                fulltaskname = phab.phid.query(phids=[data["object"]["phid"]])[data["object"]["phid"]]["fullName"]
-                link = "\x032" + phab.phid.query(phids=[data["object"]["phid"]])[data["object"]["phid"]]["uri"] + "#" + str(commentid) + "\x03"
-                message = "\x033[\x03\x0313"+ fulltaskname +"\x03\x033]\x03 \x0315" + str(who) + "\x03 "
-                if comment == True:
-                    message = message + "commented on the task: " + link
-                elif edited == True:
-                    message = message + "edited a message on the task: " + link
-                elif newcomment == True:
-                    message = message + "just created this task: " + link
-                print(message)
-                sendnotice(message)
+            fulltaskname = phab.phid.query(phids=[data["object"]["phid"]])[data["object"]["phid"]]["fullName"]
+            link = "\x032" + phab.phid.query(phids=[data["object"]["phid"]])[data["object"]["phid"]]["uri"]
+            if commentid:
+                link = link + "#" + str(commentid) + "\x03"
+            else:
+                link = link + "\x03"
+            message = "\x033[\x03\x0313"+ fulltaskname +"\x03\x033]\x03 \x0315" + str(who) + "\x03 "
+            if comment == True:
+                message = message + "commented on the task: " + link
+            elif edited == True:
+                message = message + "edited a message on the task: " + link
+            elif newtask == True:
+                message = message + "just created this task: " + link
+            print(message)
+            sendnotice(message)
 
         return "OK"
 
