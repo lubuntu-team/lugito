@@ -35,7 +35,7 @@ def sendnotice(message):
     username = "lugito"
     server = "irc.freenode.net"
     port = 6667
-    channel = "##tsimonq2-thing-testing"
+    channel = "#lubuntu-devel"
 
     conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     conn.connect((server, port))
