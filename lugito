@@ -66,6 +66,19 @@ def sendnotice(message):
 
     conn.send("NOTICE {} :{}\r\n".format(channel, message).encode("utf-8"))
 
+def ircmessage(objectstr, who, body, link):
+    # e.g. [T31: Better IRC integration]
+    message = "\x033[\x03\x0313" + objectstr + "\x03\x033]\x03 "
+    # e.g. tsimonq2 (Simon Quigley)
+    message = message + "\x0315" + who + "\x03 "
+    # e.g. commented on the task:
+    message = message + body + ": "
+    # e.g. https://phab.lubuntu.me/T40#779
+    message = message + "\x032" + link + "\x03"
+    # Make sure we can debug this if it goes haywire
+    print(message)
+    # Aaaaand, send it off!
+    sendnotice(message)
 
 @app.route("/", methods=["POST"])
 def main():
@@ -122,27 +135,43 @@ def main():
                 if comment or edited or newtask:
                     # We should also know who did this thing
                     userlookup = search[0]["authorPHID"]
-                    who = dict(phab.phid.query(phids=[userlookup]))[userlookup]["fullName"]
+                    who = str(dict(phab.phid.query(phids=[userlookup]))[userlookup]["fullName"])
 
-                    fulltaskname = phab.phid.query(phids=[data["object"]["phid"]])[data["object"]["phid"]]["fullName"]
-                    link = "\x032" + phab.phid.query(phids=[data["object"]["phid"]])[data["object"]["phid"]]["uri"]
-                    if commentid:
-                        link = link + "#" + str(commentid) + "\x03"
-                    else:
-                        link = link + "\x03"
-                    message = "\x033[\x03\x0313"+ fulltaskname +"\x03\x033]\x03 \x0315" + str(who) + "\x03 "
+                    objectstr = phab.phid.query(phids=[data["object"]["phid"]])[data["object"]["phid"]]["fullName"]
+
                     if comment:
-                        message = message + "commented on the task: " + link
+                        body = "commented on the task"
                     elif edited:
-                        message = message + "edited a message on the task: " + link
+                        body = "edited a message on the task"
                     elif newtask:
-                        message = message + "just created this task: " + link
-                    print(message)
-                    sendnotice(message)
+                        body = "just created this task"
+
+                    # Assuming this is a comment, there should always be a URI associated with it.
+                    link = phab.phid.query(phids=[data["object"]["phid"]])[data["object"]["phid"]]["uri"]
+
+                    # Even though this can be off sometimes, let's include the comment ID in the link too
+                    # FIXME: Make this more accurate, and figure out why it's inaccurate at times
+                    if commentid:
+                        link = link + "#" + str(commentid)
+
+                    ircmessage(objectstr, who, body, link)
+
             elif data["object"]["type"] == "CMIT":
                 print("It's a commit!")
                 commitphid = data["object"]["phid"]
-                print(phab.phid.query(phids=[commitphid])[commitphid]["fullName"])
+
+                objectstr = phab.phid.query(phids=[commitphid])[commitphid]["fullName"]
+
+                # FIXME: This is duplicated from above; put it in a central location
+                userlookup = search[0]["authorPHID"]
+                who = str(dict(phab.phid.query(phids=[userlookup]))[userlookup]["fullName"])
+
+                body = "committed"
+
+                # The URI for this one is waaaaaaay too long. Let's assemble it ourselves.
+                link = website + "/" + phab.phid.query(phids=[commitphid])[commitphid]["name"]
+
+                ircmessage(objectstr, who, body, link)
 
         return "OK"
 
