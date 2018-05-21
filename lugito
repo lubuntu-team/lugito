@@ -141,6 +141,8 @@ def main():
                     sendnotice(message)
             elif data["object"]["type"] == "CMIT":
                 print("It's a commit!")
+                commitphid = data["object"]["phid"]
+                print(phab.phid.query(phids=[commitphid])[commitphid]["fullName"])
 
         return "OK"
 
