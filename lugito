@@ -84,7 +84,7 @@ def ircmessage(objectstr, who, body, link):
 def main():
     data = request.data
     hash = hmac.new(bytes(u"HMAC KEY", "utf-8"), data, sha256)
-    # We MUST ensure that the request came from Phab
+    # We MUST ensure that the request came from Phab.
     if hash.hexdigest() == request.headers["X-Phabricator-Webhook-Signature"]:
         data = json.loads(data)
         print(data)
@@ -92,7 +92,12 @@ def main():
 
         exists = True
         try:
+            # Try to find the object.
             search = phab.transaction.search(objectIdentifier=data["object"]["phid"])["data"]
+            # Find the author too.
+            userlookup = search[0]["authorPHID"]
+            who = str(dict(phab.phid.query(phids=[userlookup]))[userlookup]["fullName"])
+        # If the object exists, no worries, let's just return a good response.
         except http.client.HTTPException:
             exists = False
 
@@ -107,7 +112,7 @@ def main():
                 else:
                     print("No, it's not a new task.")
 
-                # If it's not a new task, let's see if it's a comment, and if it's just an edit
+                # If it's not a new task, let's see if it's a comment, and if it's just an edit.
                 comment = None
                 commentid = None
                 edited = None
@@ -117,7 +122,7 @@ def main():
                     for task in search:
                         dataepoch = data["action"]["epoch"]
                         datemodified = task["dateModified"]
-                        # All comments within ten seconds of the request are fair game
+                        # All comments within ten seconds of the request are fair game.
                         if datemodified >= (dataepoch - 10) and datemodified <= (dataepoch + 10) and task["comments"] != []:
                             print("It's a comment, yes.")
                             comment = True
@@ -133,10 +138,6 @@ def main():
                             comment = False
 
                 if comment or edited or newtask:
-                    # We should also know who did this thing
-                    userlookup = search[0]["authorPHID"]
-                    who = str(dict(phab.phid.query(phids=[userlookup]))[userlookup]["fullName"])
-
                     objectstr = phab.phid.query(phids=[data["object"]["phid"]])[data["object"]["phid"]]["fullName"]
 
                     if comment:
@@ -149,8 +150,8 @@ def main():
                     # Assuming this is a comment, there should always be a URI associated with it.
                     link = phab.phid.query(phids=[data["object"]["phid"]])[data["object"]["phid"]]["uri"]
 
-                    # Even though this can be off sometimes, let's include the comment ID in the link too
-                    # FIXME: Make this more accurate, and figure out why it's inaccurate at times
+                    # Even though this can be off sometimes, let's include the comment ID in the link too.
+                    # FIXME: Make this more accurate, and figure out why it's inaccurate at times.
                     if commentid:
                         link = link + "#" + str(commentid)
 
@@ -161,10 +162,6 @@ def main():
                 commitphid = data["object"]["phid"]
 
                 objectstr = phab.phid.query(phids=[commitphid])[commitphid]["fullName"]
-
-                # FIXME: This is duplicated from above; put it in a central location
-                userlookup = search[0]["authorPHID"]
-                who = str(dict(phab.phid.query(phids=[userlookup]))[userlookup]["fullName"])
 
                 body = "committed"
 
