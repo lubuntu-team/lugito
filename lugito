@@ -101,6 +101,7 @@ def main():
                 for task in tasksearch:
                     dataepoch = data["action"]["epoch"]
                     datemodified = task["dateModified"]
+                    # All comments within ten seconds of the request are fair game
                     if datemodified >= (dataepoch - 10) and datemodified <= (dataepoch + 10) and task["comments"] != []:
                         print("It's a comment, yes.")
                         comment = True
