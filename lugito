@@ -115,25 +115,26 @@ def main():
                     else:
                         comment = False
 
-            # We should also know who did this thing
-            userlookup = tasksearch[0]["authorPHID"]
-            who = dict(phab.phid.query(phids=[userlookup]))[userlookup]["fullName"]
+            if comment or edited or newtask:
+                # We should also know who did this thing
+                userlookup = tasksearch[0]["authorPHID"]
+                who = dict(phab.phid.query(phids=[userlookup]))[userlookup]["fullName"]
 
-            fulltaskname = phab.phid.query(phids=[data["object"]["phid"]])[data["object"]["phid"]]["fullName"]
-            link = "\x032" + phab.phid.query(phids=[data["object"]["phid"]])[data["object"]["phid"]]["uri"]
-            if commentid:
-                link = link + "#" + str(commentid) + "\x03"
-            else:
-                link = link + "\x03"
-            message = "\x033[\x03\x0313"+ fulltaskname +"\x03\x033]\x03 \x0315" + str(who) + "\x03 "
-            if comment == True:
-                message = message + "commented on the task: " + link
-            elif edited == True:
-                message = message + "edited a message on the task: " + link
-            elif newtask == True:
-                message = message + "just created this task: " + link
-            print(message)
-            sendnotice(message)
+                fulltaskname = phab.phid.query(phids=[data["object"]["phid"]])[data["object"]["phid"]]["fullName"]
+                link = "\x032" + phab.phid.query(phids=[data["object"]["phid"]])[data["object"]["phid"]]["uri"]
+                if commentid:
+                    link = link + "#" + str(commentid) + "\x03"
+                else:
+                    link = link + "\x03"
+                message = "\x033[\x03\x0313"+ fulltaskname +"\x03\x033]\x03 \x0315" + str(who) + "\x03 "
+                if comment:
+                    message = message + "commented on the task: " + link
+                elif edited:
+                    message = message + "edited a message on the task: " + link
+                elif newtask:
+                    message = message + "just created this task: " + link
+                print(message)
+                sendnotice(message)
 
         return "OK"
 
