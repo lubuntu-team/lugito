@@ -77,65 +77,70 @@ def main():
         print(data)
         print
 
-        taskexists = True
+        exists = True
         try:
-            tasksearch = phab.transaction.search(objectIdentifier=data["object"]["phid"])["data"]
+            search = phab.transaction.search(objectIdentifier=data["object"]["phid"])["data"]
         except http.client.HTTPException:
-            taskexists = False
+            exists = False
 
-        if taskexists:
-            print("Task exists, checking to see if it's new.")
-            newtask = isnewtask(tasksearch)
-            if newtask:
-                print("Yes, it's a new task.")
-            else:
-                print("No, it's not a new task.")
+        if exists:
+            print("Object exists, checking to see if it's a task or a commit.")
 
-            # If it's not a new task, let's see if it's a comment, and if it's just an edit
-            comment = None
-            commentid = None
-            edited = None
-            if not newtask:
-                commentid = None
-                edited = False
-                for task in tasksearch:
-                    dataepoch = data["action"]["epoch"]
-                    datemodified = task["dateModified"]
-                    # All comments within ten seconds of the request are fair game
-                    if datemodified >= (dataepoch - 10) and datemodified <= (dataepoch + 10) and task["comments"] != []:
-                        print("It's a comment, yes.")
-                        comment = True
-                        commentid = task["id"]
-                        if datemodified != task["dateCreated"]:
-                            print("The comment was edited.")
-                            edited = True
-                        else:
-                            print("The comment was NOT edited.")
-                            edited = False
-                        break
-                    else:
-                        comment = False
-
-            if comment or edited or newtask:
-                # We should also know who did this thing
-                userlookup = tasksearch[0]["authorPHID"]
-                who = dict(phab.phid.query(phids=[userlookup]))[userlookup]["fullName"]
-
-                fulltaskname = phab.phid.query(phids=[data["object"]["phid"]])[data["object"]["phid"]]["fullName"]
-                link = "\x032" + phab.phid.query(phids=[data["object"]["phid"]])[data["object"]["phid"]]["uri"]
-                if commentid:
-                    link = link + "#" + str(commentid) + "\x03"
+            if data["object"]["type"] == "TASK":
+                print("This is a task. Checking if it's new.")
+                newtask = isnewtask(search)
+                if newtask:
+                    print("Yes, it's a new task.")
                 else:
-                    link = link + "\x03"
-                message = "\x033[\x03\x0313"+ fulltaskname +"\x03\x033]\x03 \x0315" + str(who) + "\x03 "
-                if comment:
-                    message = message + "commented on the task: " + link
-                elif edited:
-                    message = message + "edited a message on the task: " + link
-                elif newtask:
-                    message = message + "just created this task: " + link
-                print(message)
-                sendnotice(message)
+                    print("No, it's not a new task.")
+
+                # If it's not a new task, let's see if it's a comment, and if it's just an edit
+                comment = None
+                commentid = None
+                edited = None
+                if not newtask:
+                    commentid = None
+                    edited = False
+                    for task in search:
+                        dataepoch = data["action"]["epoch"]
+                        datemodified = task["dateModified"]
+                        # All comments within ten seconds of the request are fair game
+                        if datemodified >= (dataepoch - 10) and datemodified <= (dataepoch + 10) and task["comments"] != []:
+                            print("It's a comment, yes.")
+                            comment = True
+                            commentid = task["id"]
+                            if datemodified != task["dateCreated"]:
+                                print("The comment was edited.")
+                                edited = True
+                            else:
+                                print("The comment was NOT edited.")
+                                edited = False
+                            break
+                        else:
+                            comment = False
+
+                if comment or edited or newtask:
+                    # We should also know who did this thing
+                    userlookup = search[0]["authorPHID"]
+                    who = dict(phab.phid.query(phids=[userlookup]))[userlookup]["fullName"]
+
+                    fulltaskname = phab.phid.query(phids=[data["object"]["phid"]])[data["object"]["phid"]]["fullName"]
+                    link = "\x032" + phab.phid.query(phids=[data["object"]["phid"]])[data["object"]["phid"]]["uri"]
+                    if commentid:
+                        link = link + "#" + str(commentid) + "\x03"
+                    else:
+                        link = link + "\x03"
+                    message = "\x033[\x03\x0313"+ fulltaskname +"\x03\x033]\x03 \x0315" + str(who) + "\x03 "
+                    if comment:
+                        message = message + "commented on the task: " + link
+                    elif edited:
+                        message = message + "edited a message on the task: " + link
+                    elif newtask:
+                        message = message + "just created this task: " + link
+                    print(message)
+                    sendnotice(message)
+            elif data["object"]["type"] == "CMIT":
+                print("It's a commit!")
 
         return "OK"
 
