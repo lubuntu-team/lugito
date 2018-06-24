@@ -4,6 +4,7 @@ import http
 import hmac
 import json
 import socket
+import threading
 from flask import Flask, request
 from pprint import pprint
 from hashlib import sha256
@@ -15,33 +16,17 @@ phab = Phabricator(host=website+"/api/", token="API KEY")
 
 app = Flask(__name__)
 
-def isnewtask(task):
-    modified = None
+global username
+username = "lugito"
+server = "irc.freenode.net"
+port = 6667
+channel = "#lubuntu-devel"
 
-    for data in task:
-        if modified != None:
-            if data["dateCreated"] == data["dateModified"] and data["dateCreated"] == modified:
-                modified = data["dateCreated"]
-                newtask = True
-            else:
-                newtask = False
-                break
-        else:
-            modified = data["dateCreated"]
-
-    return newtask
-
-def sendnotice(message):
-    username = "lugito"
-    server = "irc.freenode.net"
-    port = 6667
-    channel = "#lubuntu-devel"
-
+def connecttoirc():
+    global conn, username
     conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     conn.connect((server, port))
-
     setup = False
-
     usersuffix = 0
     while setup == False:
         response = conn.recv(512).decode("utf-8")
@@ -64,6 +49,22 @@ def sendnotice(message):
         if "366" in response:
             setup = True
 
+def isnewtask(task):
+    modified = None
+    for data in task:
+        if modified != None:
+            if data["dateCreated"] == data["dateModified"] and data["dateCreated"] == modified:
+                modified = data["dateCreated"]
+                newtask = True
+            else:
+                newtask = False
+                break
+        else:
+            modified = data["dateCreated"]
+
+    return newtask
+
+def sendnotice(message):
     conn.send("NOTICE {} :{}\r\n".format(channel, message).encode("utf-8"))
 
 def ircmessage(objectstr, who, body, link):
@@ -79,6 +80,18 @@ def ircmessage(objectstr, who, body, link):
     print(message)
     # Aaaaand, send it off!
     sendnotice(message)
+
+def listenirc():
+    while 1:
+        ircmsg = conn.recv(512)
+        if len(ircmsg) == 0:
+            print("Connection lost, reconnecting!")
+            connecttoirc()
+            continue
+        ircmsg = ircmsg.decode("UTF-8").strip('\n\r')
+        print(ircmsg)
+        if ircmsg.find("PING :") != -1:
+            conn.send(bytes("PONG :pingis\n", "UTF-8"))
 
 @app.route("/", methods=["POST"])
 def main():
@@ -173,4 +186,8 @@ def main():
         return "OK"
 
 if __name__ == "__main__":
+    connecttoirc()
+    t = threading.Thread(target=listenirc)
+    t.daemon = True
+    t.start()
     app.run(host="0.0.0.0", port=5000)
