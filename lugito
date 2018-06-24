@@ -52,7 +52,7 @@ def connecttoirc():
 def isnewtask(task):
     modified = None
     for data in task:
-        if modified != None:
+        if modified:
             if data["dateCreated"] == data["dateModified"] and data["dateCreated"] == modified:
                 modified = data["dateCreated"]
                 newtask = True
