@@ -9,6 +9,7 @@ from flask import Flask, request
 from pprint import pprint
 from hashlib import sha256
 from phabricator import Phabricator
+from time import sleep
 
 website = "https://phab.lubuntu.me"
 
@@ -78,6 +79,8 @@ def ircmessage(objectstr, who, body, link):
     message = message + "\x032" + link + "\x03"
     # Make sure we can debug this if it goes haywire
     print(message)
+    # Sleep for a second, so when we have a bunch of messages we have a buffer
+    sleep(1)
     # Aaaaand, send it off!
     sendnotice(message)
 
