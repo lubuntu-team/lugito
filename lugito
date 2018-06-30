@@ -66,7 +66,7 @@ def isnewtask(task):
 def sendnotice(message):
     conn.send("NOTICE {} :{}\r\n".format(channel, message).encode("utf-8"))
 
-def ircmessage(objectstr, who, body, link):
+def ircmessage(objectstr, who=None, body=None, link=None):
     # e.g. [T31: Better IRC integration]
     message = "\x033[\x03\x0313" + objectstr + "\x03\x033]\x03 "
     # e.g. tsimonq2 (Simon Quigley)
@@ -82,6 +82,13 @@ def ircmessage(objectstr, who, body, link):
     # Aaaaand, send it off!
     sendnotice(message)
 
+def ircinfo(message):
+    message = message.split(" :" + username + ": ")[1]
+
+    if " T" in message:
+        if " " not in message.split(" T")[1]:
+            sendnotice(message.split(" T")[1])
+
 def listenirc():
     while True:
         ircmsg = conn.recv(512)
@@ -93,6 +100,8 @@ def listenirc():
         print(ircmsg)
         if ircmsg.find("PING :") != -1:
             conn.send(bytes("PONG :pingis\n", "UTF-8"))
+        elif ircmsg.find(" :" + username + ": ") != -1:
+            ircinfo(ircmsg)
 
 @app.route("/", methods=["POST"])
 def main():
