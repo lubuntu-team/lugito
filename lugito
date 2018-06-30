@@ -12,16 +12,14 @@ from phabricator import Phabricator
 from time import sleep
 
 website = "https://phab.lubuntu.me"
-
 phab = Phabricator(host=website+"/api/", token="API KEY")
-
-app = Flask(__name__)
-
 global username
 username = "lugito"
 server = "irc.freenode.net"
 port = 6667
 channel = "#lubuntu-devel"
+
+app = Flask(__name__)
 
 def connecttoirc():
     global conn, username
