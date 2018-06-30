@@ -85,7 +85,7 @@ def ircmessage(objectstr, who, body, link):
     sendnotice(message)
 
 def listenirc():
-    while 1:
+    while True:
         ircmsg = conn.recv(512)
         if len(ircmsg) == 0:
             print("Connection lost, reconnecting!")
