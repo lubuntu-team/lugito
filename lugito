@@ -66,7 +66,7 @@ def isnewtask(task):
 def sendnotice(message):
     conn.send("NOTICE {} :{}\r\n".format(channel, message).encode("utf-8"))
 
-def ircmessage(objectstr, who=None, body=None, link=None):
+def ircmessage(objectstr, who, body, link):
     # e.g. [T31: Better IRC integration]
     message = "\x033[\x03\x0313" + objectstr + "\x03\x033]\x03 "
     # e.g. tsimonq2 (Simon Quigley)
@@ -82,12 +82,49 @@ def ircmessage(objectstr, who=None, body=None, link=None):
     # Aaaaand, send it off!
     sendnotice(message)
 
-def ircinfo(message):
-    message = message.split(" :" + username + ": ")[1]
+def ircbot(message):
+    message = message.split(" :" + username + ": info")[1]
+    sendmessage = ""
 
-    if " T" in message:
-        if " " not in message.split(" T")[1]:
-            sendnotice(message.split(" T")[1])
+    for item in message.split():
+        if item.startswith("T"):
+            try:
+                # We only need the task number.
+                taskinfo = phab.maniphest.info(task_id=int(item.split("T")[1]))
+
+                sendmessage = sendmessage + "\x033[\x03"
+
+                # The color of the priority text should correspond to its value.
+                color = taskinfo["priorityColor"]
+                if color == "violet":
+                    sendmessage = sendmessage + "\x036Needs Triage"
+                elif color == "pink":
+                    sendmessage = sendmessage + "\x035Unbreak Now!"
+                elif color == "red":
+                    sendmessage = sendmessage + "\x034High"
+                elif color == "orange":
+                    sendmessage = sendmessage + "\x037Medium"
+                elif color == "yellow":
+                    sendmessage = sendmessage + "\x038Low"
+                elif color == "sky":
+                    sendmessage = sendmessage + "\x037Wishlist"
+
+                # Put the task status in the message.
+                sendmessage = sendmessage + ", " + taskinfo["statusName"] + "\x03"
+
+                sendmessage = sendmessage + "\x033]\x03"
+
+                # Put the title in there as well.
+                sendmessage = sendmessage + taskinfo["title"].strip() + ": "
+
+                # And the link.
+                sendmessage = "\x032" + taskinfo["uri"] + "\x03"
+
+                # Send it off!
+                sendnotice(sendmessage)
+            # If someone wrote something like "Tblah", obviously that's not right.
+            except ValueError:
+                sendnotice("Error: " + item.strip() + "is an invalid task reference.")
 
 def listenirc():
     while True:
@@ -101,7 +138,7 @@ def listenirc():
         if ircmsg.find("PING :") != -1:
             conn.send(bytes("PONG :pingis\n", "UTF-8"))
         elif ircmsg.find(" :" + username + ": ") != -1:
-            ircinfo(ircmsg)
+            ircbot(ircmsg)
 
 @app.route("/", methods=["POST"])
 def main():
