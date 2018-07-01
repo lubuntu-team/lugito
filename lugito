@@ -139,6 +139,8 @@ def listenirc():
             conn.send(bytes("PONG :pingis\n", "UTF-8"))
         elif ircmsg.find(" :" + username + ": ") != -1:
             ircbot(ircmsg)
+        elif ircmsg.find("https://phab.lubuntu.me/T") != -1:
+            ircbot(ircmsg.split("https://phab.lubuntu.me/")[1])
 
 @app.route("/", methods=["POST"])
 def main():
