@@ -112,7 +112,7 @@ def ircbot(message):
                 # Put the task status in the message.
                 sendmessage = sendmessage + ", " + taskinfo["statusName"] + "\x03"
 
-                sendmessage = sendmessage + "\x033]\x03"
+                sendmessage = sendmessage + "\x033]\x03 "
 
                 # Put the title in there as well.
                 sendmessage = sendmessage + taskinfo["title"].strip() + ": "
@@ -124,7 +124,7 @@ def ircbot(message):
                 sendnotice(sendmessage)
             # If someone wrote something like "Tblah", obviously that's not right.
             except ValueError:
-                sendnotice("Error: " + item.strip() + "is an invalid task reference.")
+                sendnotice("\x034Error: " + item.strip() + "is an invalid task reference.\x03")
 
 def listenirc():
     while True:
