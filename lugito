@@ -118,7 +118,7 @@ def ircbot(message):
                 sendmessage = sendmessage + taskinfo["title"].strip() + ": "
 
                 # And the link.
-                sendmessage = "\x032" + taskinfo["uri"] + "\x03"
+                sendmessage = sendmessage + "\x032" + taskinfo["uri"] + "\x03"
 
                 # Send it off!
                 sendnotice(sendmessage)
