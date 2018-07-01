@@ -82,49 +82,60 @@ def ircmessage(objectstr, who, body, link):
     # Aaaaand, send it off!
     sendnotice(message)
 
-def ircbot(message):
-    message = message.split(" :" + username + ": info")[1]
+def gettaskinfo(task):
     sendmessage = ""
+    try:
+        # We only need the task number.
+        taskinfo = phab.maniphest.info(task_id=int(task.split("T")[1]))
 
-    for item in message.split():
-        if item.startswith("T"):
-            try:
-                # We only need the task number.
-                taskinfo = phab.maniphest.info(task_id=int(item.split("T")[1]))
+        sendmessage = sendmessage + "\x033[\x03"
 
-                sendmessage = sendmessage + "\x033[\x03"
+        # The color of the priority text should correspond to its value.
+        color = taskinfo["priorityColor"]
+        if color == "violet":
+            sendmessage = sendmessage + "\x036Needs Triage"
+        elif color == "pink":
+            sendmessage = sendmessage + "\x035Unbreak Now!"
+        elif color == "red":
+            sendmessage = sendmessage + "\x034High"
+        elif color == "orange":
+            sendmessage = sendmessage + "\x037Medium"
+        elif color == "yellow":
+            sendmessage = sendmessage + "\x038Low"
+        elif color == "sky":
+            sendmessage = sendmessage + "\x037Wishlist"
 
-                # The color of the priority text should correspond to its value.
-                color = taskinfo["priorityColor"]
-                if color == "violet":
-                    sendmessage = sendmessage + "\x036Needs Triage"
-                elif color == "pink":
-                    sendmessage = sendmessage + "\x035Unbreak Now!"
-                elif color == "red":
-                    sendmessage = sendmessage + "\x034High"
-                elif color == "orange":
-                    sendmessage = sendmessage + "\x037Medium"
-                elif color == "yellow":
-                    sendmessage = sendmessage + "\x038Low"
-                elif color == "sky":
-                    sendmessage = sendmessage + "\x037Wishlist"
+        # Put the task status in the message.
+        sendmessage = sendmessage + ", " + taskinfo["statusName"] + "\x03"
 
-                # Put the task status in the message.
-                sendmessage = sendmessage + ", " + taskinfo["statusName"] + "\x03"
+        sendmessage = sendmessage + "\x033]\x03 "
 
-                sendmessage = sendmessage + "\x033]\x03 "
+        # Put the title in there as well.
+        sendmessage = sendmessage + taskinfo["title"].strip() + ": "
 
-                # Put the title in there as well.
-                sendmessage = sendmessage + taskinfo["title"].strip() + ": "
+        # And the link.
+        sendmessage = sendmessage + "\x032" + taskinfo["uri"] + "\x03"
 
-                # And the link.
-                sendmessage = sendmessage + "\x032" + taskinfo["uri"] + "\x03"
+        # Send it off!
+        sendnotice(sendmessage)
+    # If someone wrote something like "Tblah", obviously that's not right.
+    except ValueError:
+        sendnotice("\x034Error: " + task.strip() + "is an invalid task reference.\x03")
+        return None
 
-                # Send it off!
-                sendnotice(sendmessage)
-            # If someone wrote something like "Tblah", obviously that's not right.
-            except ValueError:
-                sendnotice("\x034Error: " + item.strip() + "is an invalid task reference.\x03")
+def ircbot(message, msgtype):
+    if msgtype == "info":
+        message = message.split(" :" + username + ": info")[1]
+        for item in message.split():
+            if item.startswith("T"):
+                gettaskinfo(item.strip())
+    elif msgtype == "link":
+        for item in message.split("https://phab.lubuntu.me/"):
+            if item.split()[0].strip().startswith("T"):
+                gettaskinfo(item.split()[0].strip())
+    else:
+        sendnotice("\x034Error: unknown command.\x03")
+        return None
 
 def listenirc():
     while True:
@@ -137,10 +148,10 @@ def listenirc():
         print(ircmsg)
         if ircmsg.find("PING :") != -1:
             conn.send(bytes("PONG :pingis\n", "UTF-8"))
-        elif ircmsg.find(" :" + username + ": ") != -1:
-            ircbot(ircmsg)
+        elif ircmsg.find(" :" + username + ": info") != -1:
+            ircbot(ircmsg, "info")
         elif ircmsg.find("https://phab.lubuntu.me/T") != -1:
-            ircbot(ircmsg.split("https://phab.lubuntu.me/")[1])
+            ircbot(ircmsg, "link")
 
 @app.route("/", methods=["POST"])
 def main():
