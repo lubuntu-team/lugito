@@ -5,6 +5,7 @@ import hmac
 import json
 import socket
 import threading
+import logging
 from flask import Flask, request
 from pprint import pprint
 from hashlib import sha256
@@ -18,6 +19,9 @@ username = "lugito"
 server = "irc.freenode.net"
 port = 6667
 channel = "#lubuntu-devel"
+
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -47,6 +51,7 @@ def connecttoirc():
 
         if "366" in response:
             setup = True
+    logger.info("Successfully connected to the IRC server.")
 
 def isnewtask(task):
     modified = None
@@ -76,7 +81,7 @@ def ircmessage(objectstr, who, body, link):
     # e.g. https://phab.lubuntu.me/T40#779
     message = message + "\x032" + link + "\x03"
     # Make sure we can debug this if it goes haywire
-    print(message)
+    logger.debug(message)
     # Sleep for a second, so when we have a bunch of messages we have a buffer
     sleep(1)
     # Aaaaand, send it off!
@@ -141,11 +146,11 @@ def listenirc():
     while True:
         ircmsg = conn.recv(512)
         if len(ircmsg) == 0:
-            print("Connection lost, reconnecting!")
+            logger.warn("Connection lost, reconnecting!")
             connecttoirc()
             continue
         ircmsg = ircmsg.decode("UTF-8").strip('\n\r')
-        print(ircmsg)
+        logger.debug(ircmsg)
         if ircmsg.find("PING :") != -1:
             conn.send(bytes("PONG :pingis\n", "UTF-8"))
         elif ircmsg.find(" :" + username + ": info") != -1:
@@ -160,8 +165,7 @@ def main():
     # We MUST ensure that the request came from Phab.
     if hash.hexdigest() == request.headers["X-Phabricator-Webhook-Signature"]:
         data = json.loads(data)
-        print(data)
-        print
+        logger.debug(data)
 
         exists = True
         try:
@@ -175,15 +179,15 @@ def main():
             exists = False
 
         if exists:
-            print("Object exists, checking to see if it's a task or a commit.")
+            logger.debug("Object exists, checking to see if it's a task or a commit.")
 
             if data["object"]["type"] == "TASK":
-                print("This is a task. Checking if it's new.")
+                logger.debug("This is a task. Checking if it's new.")
                 newtask = isnewtask(search)
                 if newtask:
-                    print("Yes, it's a new task.")
+                    logger.debug("Yes, it's a new task.")
                 else:
-                    print("No, it's not a new task.")
+                    logger.debug("No, it's not a new task.")
 
                 # If it's not a new task, let's see if it's a comment, and if it's just an edit.
                 comment = None
@@ -197,14 +201,14 @@ def main():
                         datemodified = task["dateModified"]
                         # All comments within ten seconds of the request are fair game.
                         if datemodified >= (dataepoch - 10) and datemodified <= (dataepoch + 10) and task["comments"] != []:
-                            print("It's a comment, yes.")
+                            logger.debug("It's a comment, yes.")
                             comment = True
                             commentid = task["id"]
                             if datemodified != task["dateCreated"]:
-                                print("The comment was edited.")
+                                logger.debug("The comment was edited.")
                                 edited = True
                             else:
-                                print("The comment was NOT edited.")
+                                logger.debug("The comment was NOT edited.")
                                 edited = False
                             break
                         else:
@@ -231,7 +235,7 @@ def main():
                     ircmessage(objectstr, who, body, link)
 
             elif data["object"]["type"] == "CMIT":
-                print("It's a commit!")
+                logger.debug("It's a commit!")
                 commitphid = data["object"]["phid"]
 
                 objectstr = phab.phid.query(phids=[commitphid])[commitphid]["fullName"]
