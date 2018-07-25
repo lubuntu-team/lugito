@@ -21,7 +21,7 @@ username = "lugito"
 server = "irc.freenode.net"
 port = 6667
 channel = "#lubuntu-devel"
-lp = Launchpad.login_with("lugito", "staging", "devel")
+lp = Launchpad.login_with("lugito", "production", "devel")
 bugmessage = ("This bug has been marked as fixed in the Git repository: LINK\n"
               "The commit message is the following: COMMITMESSAGE\n\n"
               "(Note: I am only a bot. If this message was received in error, "
