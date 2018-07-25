@@ -158,7 +158,7 @@ def listenirc():
         elif ircmsg.find("https://phab.lubuntu.me/T") != -1:
             ircbot(ircmsg, "link")
 
-@app.route("/", methods=["POST"])
+@app.route("/irc", methods=["POST"])
 def main():
     data = request.data
     hash = hmac.new(bytes(u"HMAC KEY", "utf-8"), data, sha256)
