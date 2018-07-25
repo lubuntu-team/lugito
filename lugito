@@ -166,7 +166,7 @@ def listenirc():
         elif ircmsg.find("https://phab.lubuntu.me/T") != -1:
             ircbot(ircmsg, "link")
 
-@app.route("/commithook")
+@app.route("/commithook", methods=["POST"])
 def commithook():
     data = request.data
     hash = hmac.new(bytes(u"HMAC KEY", "utf-8"), data, sha256)
