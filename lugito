@@ -204,6 +204,8 @@ def commithook():
                     lpname = "lubuntu-artwork"
                 elif "rCALASETTINGS" in phidquery["name"]:
                     lpname = "calamares-settings-ubuntu"
+                elif "rQTERMINALPACKAGING" in phidquery["name"]:
+                    lpname = "qterminal"
                 else:
                     logger.debug("Somehow, an unsupported repository showed up here.")
 
