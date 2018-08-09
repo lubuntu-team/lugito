@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import re
+import ssl
 import http
 import hmac
 import json
@@ -18,8 +19,9 @@ website = "https://phab.lubuntu.me"
 phab = Phabricator(host=website+"/api/", token="API KEY")
 global username
 username = "lugito"
+password = ""
 server = "irc.freenode.net"
-port = 6667
+port = 6697
 channel = "#lubuntu-devel"
 lp = Launchpad.login_with("lugito", "production", "devel")
 bugmessage = ("This bug has been marked as fixed in the Git repository: LINK\n"
@@ -35,17 +37,26 @@ app = Flask(__name__)
 
 def connecttoirc():
     global conn, username
-    conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    rawconn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    conn = ssl.wrap_socket(rawconn)
     conn.connect((server, port))
     setup = False
     usersuffix = 0
+    logger.info("Connecting to IRC.")
     while setup == False:
         response = conn.recv(512).decode("utf-8")
+        logger.debug(response)
         if "No Ident response" in response:
             conn.send("NICK {}\r\n".format(username).encode("utf-8"))
             conn.send("USER {} * * :{}\r\n".format(username, username).encode("utf-8"))
+            conn.send("PRIVMSG nickserv :identify {} {}\r\n".format(username, password).encode("utf-8"))
 
-        if "376" in response:
+        if "You are now identified" in response:
+            sleep(5)
+            conn.send("JOIN {}\r\n".format(channel).encode("utf-8"))
+
+        if "477" in response:
+            sleep(5)
             conn.send("JOIN {}\r\n".format(channel).encode("utf-8"))
 
         if "433" in response:
@@ -212,7 +223,7 @@ def commithook():
                 if lpname:
                     # https://help.launchpad.net/Code/Git#Linking_to_bugs
                     regexp = re.compile(r"lp:\s+\#\d+(?:,\s*\#\d+)*")
-                    lpbugs = regexp.search(commitmessage.lower()).group(0).strip(",").replace("#", "")
+                    lpbugs = regexp.search(commitmessage.lower()).group(0).strip("lp: ").replace("#", "")
                     for bug in lpbugs.split(", "):
                         goodtask = None
                         lbug = lp.load("/bugs/"+str(bug).strip())
@@ -227,8 +238,8 @@ def commithook():
                                     goodtask = task
                         if goodtask:
                             message = bugmessage
-                            message.replace("LINK", website + "/" + phidquery["name"])
-                            message.replace("COMMITMESSAGE", commitmessage)
+                            message = message.replace("LINK", website + "/" + phidquery["name"])
+                            message = message.replace("COMMITMESSAGE", commitmessage)
                             bug.newMessage(content=message)
                             goodtask.status = "Fix Committed"
                             goodtask.lp_save()
