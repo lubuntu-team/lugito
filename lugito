@@ -219,6 +219,8 @@ def commithook():
                     lpname = "qterminal"
                 elif "rLXQTCONFIGPACKAGING" in phidquery["name"]:
                     lpname = "lxqt-config"
+                elif "rNMTRAYPACKAGING" in phidquery["name"]:
+                    lpname = "nm-tray"
                 else:
                     logger.debug("Somehow, an unsupported repository showed up here.")
 
