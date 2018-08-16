@@ -225,26 +225,28 @@ def commithook():
                 if lpname:
                     # https://help.launchpad.net/Code/Git#Linking_to_bugs
                     regexp = re.compile(r"lp:\s+\#\d+(?:,\s*\#\d+)*")
-                    lpbugs = regexp.search(commitmessage.lower()).group(0).strip("lp: ").replace("#", "")
-                    for bug in lpbugs.split(", "):
-                        goodtask = None
-                        lbug = lp.load("/bugs/"+str(bug).strip())
-                        bug = lbug
-                        for task in bug.bug_tasks:
-                            for rel in cursupportedrels:
-                                if lpname + " (Ubuntu " + rel + ")" in task.bug_target_display_name:
-                                    goodtask = task
-                                    break
-                            if not goodtask:
-                                if lpname + " (Ubuntu)" in task.bug_target_display_name:
-                                    goodtask = task
-                        if goodtask:
-                            message = bugmessage
-                            message = message.replace("LINK", website + "/" + phidquery["name"])
-                            message = message.replace("COMMITMESSAGE", commitmessage)
-                            bug.newMessage(content=message)
-                            goodtask.status = "Fix Committed"
-                            goodtask.lp_save()
+                    regexpsearch = regexp.search(commitmessage.lower())
+                    if regexpsearch:
+                        lpbugs = regexpsearch.group(0).strip("lp: ").replace("#", "")
+                        for bug in lpbugs.split(", "):
+                            goodtask = None
+                            lbug = lp.load("/bugs/"+str(bug).strip())
+                            bug = lbug
+                            for task in bug.bug_tasks:
+                                for rel in cursupportedrels:
+                                    if lpname + " (Ubuntu " + rel + ")" in task.bug_target_display_name:
+                                        goodtask = task
+                                        break
+                                if not goodtask:
+                                    if lpname + " (Ubuntu)" in task.bug_target_display_name:
+                                        goodtask = task
+                            if goodtask:
+                                message = bugmessage
+                                message = message.replace("LINK", website + "/" + phidquery["name"])
+                                message = message.replace("COMMITMESSAGE", commitmessage)
+                                bug.newMessage(content=message)
+                                goodtask.status = "Fix Committed"
+                                goodtask.lp_save()
 
         return "OK"
 
