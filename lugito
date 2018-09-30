@@ -101,8 +101,8 @@ def ircmessage(objectstr, who, body, link):
     message = message + "\x032" + link + "\x03"
     # Make sure we can debug this if it goes haywire
     logger.debug(message)
-    # Sleep for a second, so when we have a bunch of messages we have a buffer
-    sleep(1)
+    # Sleep for a fifth of a second, so when we have a bunch of messages we have a buffer
+    sleep(0.2)
     # Aaaaand, send it off!
     sendnotice(message)
 
