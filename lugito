@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
-import re
+import regex
 import ssl
 import http
+import http.client
 import hmac
 import json
 import socket
@@ -16,8 +17,7 @@ from phabricator import Phabricator
 from launchpadlib.launchpad import Launchpad
 
 website = "https://phab.lubuntu.me"
-phab = Phabricator(host=website+"/api/", token="API KEY")
-global username
+phab = Phabricator(host=website + "/api/", token="API KEY")
 username = "lugito"
 password = ""
 server = "irc.freenode.net"
@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
+
 def connecttoirc():
     global conn, username
     rawconn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -43,7 +44,7 @@ def connecttoirc():
     setup = False
     usersuffix = 0
     logger.info("Connecting to IRC.")
-    while setup == False:
+    while not setup:
         response = conn.recv(512).decode("utf-8")
         logger.debug(response)
         if "No Ident response" in response:
@@ -72,7 +73,9 @@ def connecttoirc():
             setup = True
     logger.info("Successfully connected to the IRC server.")
 
+
 def isnewtask(task):
+    newtask = None
     modified = None
     for data in task:
         if modified:
@@ -87,8 +90,10 @@ def isnewtask(task):
 
     return newtask
 
+
 def sendnotice(message):
     conn.send("NOTICE {} :{}\r\n".format(channel, message).encode("utf-8"))
+
 
 def ircmessage(objectstr, who, body, link):
     # e.g. [T31: Better IRC integration]
@@ -105,6 +110,7 @@ def ircmessage(objectstr, who, body, link):
     sleep(0.2)
     # Aaaaand, send it off!
     sendnotice(message)
+
 
 def gettaskinfo(task):
     sendmessage = ""
@@ -147,6 +153,7 @@ def gettaskinfo(task):
         sendnotice("\x034Error: " + task.strip() + "is an invalid task reference.\x03")
         return None
 
+
 def ircbot(message, msgtype):
     if msgtype == "info":
         message = message.split(" :" + username + ": info")[1]
@@ -161,11 +168,13 @@ def ircbot(message, msgtype):
         sendnotice("\x034Error: unknown command.\x03")
         return None
 
+
 def listenirc():
     while True:
         ircmsg = conn.recv(512)
         if len(ircmsg) == 0:
-            logger.warn("Connection lost, reconnecting!")
+            # logger.warn is deprecated, use .warning.
+            logger.warning("Connection lost, reconnecting!")
             connecttoirc()
             continue
         ircmsg = ircmsg.decode("UTF-8").strip('\n\r')
@@ -177,12 +186,14 @@ def listenirc():
         elif ircmsg.find("https://phab.lubuntu.me/T") != -1:
             ircbot(ircmsg, "link")
 
+
 @app.route("/commithook", methods=["POST"])
 def commithook():
     data = request.data
-    hash = hmac.new(bytes(u"HMAC KEY", "utf-8"), data, sha256)
+    # Use hash_ instead of hash to not shadow other globals/protecteds
+    hash_ = hmac.new(bytes(u"HMAC KEY", "utf-8"), data, sha256)
     # We MUST ensure that the request came from Phab.
-    if hash.hexdigest() == request.headers["X-Phabricator-Webhook-Signature"]:
+    if hash_.hexdigest() == request.headers["X-Phabricator-Webhook-Signature"]:
         data = json.loads(data)
         logger.debug(data)
 
@@ -226,13 +237,13 @@ def commithook():
 
                 if lpname:
                     # https://help.launchpad.net/Code/Git#Linking_to_bugs
-                    regexp = re.compile(r"lp:\s+\#\d+(?:,\s*\#\d+)*")
+                    regexp = regex.compile(r"lp:\s+\#\d+(?:,\s*\#\d+)*")
                     regexpsearch = regexp.search(commitmessage.lower())
                     if regexpsearch:
                         lpbugs = regexpsearch.group(0).strip("lp: ").replace("#", "")
                         for bug in lpbugs.split(", "):
                             goodtask = None
-                            lbug = lp.load("/bugs/"+str(bug).strip())
+                            lbug = lp.load("/bugs/" + str(bug).strip())
                             bug = lbug
                             for task in bug.bug_tasks:
                                 for rel in cursupportedrels:
@@ -252,12 +263,14 @@ def commithook():
 
         return "OK"
 
+
 @app.route("/irc", methods=["POST"])
 def main():
     data = request.data
-    hash = hmac.new(bytes(u"HMAC KEY", "utf-8"), data, sha256)
+    # Use hash_ instead of 'hash' to not shadow externally global values/variables/protecteds
+    hash_ = hmac.new(bytes(u"HMAC KEY", "utf-8"), data, sha256)
     # We MUST ensure that the request came from Phab.
-    if hash.hexdigest() == request.headers["X-Phabricator-Webhook-Signature"]:
+    if hash_.hexdigest() == request.headers["X-Phabricator-Webhook-Signature"]:
         data = json.loads(data)
         logger.debug(data)
 
@@ -294,7 +307,7 @@ def main():
                         dataepoch = data["action"]["epoch"]
                         datemodified = task["dateModified"]
                         # All comments within ten seconds of the request are fair game.
-                        if datemodified >= (dataepoch - 10) and datemodified <= (dataepoch + 10) and task["comments"] != []:
+                        if (dataepoch - 10) <= datemodified <= (dataepoch + 10) and task["comments"] != []:
                             logger.debug("It's a comment, yes.")
                             comment = True
                             commentid = task["id"]
@@ -311,6 +324,8 @@ def main():
                 if comment or edited or newtask:
                     objectstr = phab.phid.query(phids=[data["object"]["phid"]])[data["object"]["phid"]]["fullName"]
 
+                    body = ""
+
                     if comment:
                         body = "commented on the task"
                     elif edited:
@@ -325,7 +340,6 @@ def main():
                     # FIXME: Make this more accurate, and figure out why it's inaccurate at times.
                     if commentid:
                         link = link + "#" + str(commentid)
-
                     ircmessage(objectstr, who, body, link)
 
             elif data["object"]["type"] == "CMIT":
@@ -338,10 +352,10 @@ def main():
 
                 # The URI for this one is waaaaaaay too long. Let's assemble it ourselves.
                 link = website + "/" + phab.phid.query(phids=[commitphid])[commitphid]["name"]
-
                 ircmessage(objectstr, who, body, link)
 
         return "OK"
+
 
 if __name__ == "__main__":
     connecttoirc()
