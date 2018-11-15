@@ -1,0 +1,22 @@
+{
+    "object": {
+        "type": "DREV",
+        "phid": "PHID-DREV-z5l6ecfaugf6abnwvjeg"
+    },
+    "triggers": [
+        {
+            "phid": "PHID-HRUL-6shsdzbrq7d3kucru3nt"
+        }
+    ],
+    "action": {
+        "test": false,
+        "silent": false,
+        "secure": false,
+        "epoch": 1542019737
+    },
+    "transactions": [
+        {
+            "phid": "PHID-XACT-DREV-aklgm5tv34ajmcp"
+        }
+    ]
+}

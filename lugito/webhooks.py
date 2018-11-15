@@ -1,0 +1,142 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+# S.D.G
+
+"""
+
+:mod:`lugito.webhooks`
+======================================
+
+Lugito webhooks
+
+.. currentmodule:: lugito.webhooks
+"""
+
+# Imports
+import logging
+import threading
+from flask import Flask, request
+from lugito import Lugito
+from lugito.connectors.irc import IRCConnector
+
+# Constants
+GLOBAL_LOG_LEVEL = logging.DEBUG
+
+# Instantiate Lugito and connectors
+lugito = Lugito(GLOBAL_LOG_LEVEL)
+WEBSITE = lugito.host.replace('/api/', '')
+
+irc_con = IRCConnector()
+
+# Logging
+logger = logging.getLogger('lugito.webhooks')
+
+# Add log level
+ch = logging.StreamHandler()
+
+formatter = logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch.setFormatter(formatter)
+
+logger.addHandler(ch)
+logger.setLevel(GLOBAL_LOG_LEVEL)
+
+# Flask
+app = Flask('lugito')
+
+
+@app.route("/irc", methods=["POST"])
+def _main():
+    """Main route"""
+
+    if lugito.validate_HMAC('irc', request):
+
+        author = lugito.get_author_fullname()
+
+        # Without the author we can't continue
+        if author is None:
+            return 'Ok'
+
+        logger.debug("Object exists, checking to see if it's a task, diff "\
+            "or a commit.")
+
+        newtask = lugito.is_new_object()
+        is_new_comment, is_edited, comment_id = lugito.is_comment()
+        object_type = lugito.request_data["object"]["type"]
+
+        body = ""
+        link = ""
+        objectstr = lugito.get_object_string("fullName")
+
+        send_msg = True
+        # Determine what event produced the webhook call
+        if (object_type == "TASK") and newtask:
+            logger.debug("Object is a new task.")
+            body = "just created this task"
+            link = lugito.get_object_string("uri")
+
+        elif (object_type == "TASK") and (not newtask):
+            logger.debug("Object is NOT a new task.")
+
+            # Is it a new or edited comment
+            if is_new_comment and (not is_edited):
+                logger.debug("Object is a new comment.")
+                body = "commented on the task"
+
+            elif (not is_new_comment) and is_edited:
+                logger.debug("Object is an edited comment.")
+                body = "edited a message on the task"
+
+            if is_new_comment or is_edited:
+                link = lugito.get_object_string("uri")
+                link += "#" + str(comment_id)
+                logger.info(link)
+
+            else:
+                logger.debug("The object has already been processed")
+                send_msg = False
+
+        elif (object_type == "DREV") and newtask:
+            logger.debug("Object is a new diff.")
+            body = "just created this diff"
+            link = lugito.get_object_string("uri")
+
+        elif (object_type == "DREV") and (not newtask):
+            logger.debug("Object is NOT a new diff.")
+
+            # Is it a new or edited comment
+            if is_new_comment and (not is_edited):
+                logger.debug("Object is a new comment.")
+                body = "commented on the diff"
+
+            elif (not is_new_comment) and is_edited:
+                logger.debug("Object is an edited comment.")
+                body = "edited a message on the diff"
+
+            if is_new_comment or is_edited:
+                link = lugito.get_object_string("uri")
+                link += "#" + str(comment_id)
+                logger.info(link)
+
+            else:
+                logger.debug("The object has already been processed")
+                send_msg = False
+
+        elif object_type == "CMIT":
+            logger.debug("Object is a commit.")
+            body = "committed"
+            link = WEBSITE + "/" + lugito.get_object_string("name")
+            logger.info(link)
+
+        if send_msg:
+            irc_con.send(objectstr, author, body, link)
+
+    return 'Ok'
+
+
+def run():
+    irc_con.connect()
+    t = threading.Thread(target=irc_con.listen)
+    t.daemon = True
+    t.start()
+    app.run(host="0.0.0.0", port=5000)

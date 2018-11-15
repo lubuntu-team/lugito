@@ -1,0 +1,27 @@
+{
+    "hosts": {
+        "http://127.0.0.1:9091/api/": {
+            "token": "api-nojs2ip33hmp4zn6u6cf72w7d6yh"
+        }
+    },
+    "config": {
+        "default": "http://127.0.0.1:9091/api/"
+    },
+    "HMAC": {
+        "diffhook": "vglzi6t4gsumnilv27r27no7rs3vgs75",
+        "commithook": "znkyfflbcia5gviqx5ybad7s6uyfywxi"
+    },
+    "irc": {
+        "host": "irc.freenode.net",
+        "port": "6697",
+        "username": "someusername",
+        "password": "somepassword",
+        "channel": "#somechannel"
+    },
+    "launchpad": {
+        "application": "lugito",
+        "staging": "production",
+        "version": "devel",
+        "supported_versions": ["Cosmic", "Bionic", "Xenial", "Trusty"]
+    }
+}
