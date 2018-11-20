@@ -18,25 +18,27 @@ import socket
 import logging
 import threading
 import phabricator
+import lugito
 from time import sleep
 
 
-class IRCConnector(object):
+class irc(object):
 
-    def __init__(self, log_level=logging.DEBUG):
+    def __init__(self, log_level=logging.DEBUG, sleep_delay=5):
 
         # IRC info
         # Read the configuration out of the .arcconfig file
-        self.host = phabricator.ARCRC['irc']['host']
-        self.port = int(phabricator.ARCRC['irc']['port'])
-        self.username = phabricator.ARCRC['irc']['username']
-        self.password = phabricator.ARCRC['irc']['password']
-        self.channel = phabricator.ARCRC['irc']['channel']
+        self.host = lugito.config.CONFIG['connectors']['irc']['host']
+        self.port = int(lugito.config.CONFIG['connectors']['irc']['port'])
+        self.username = lugito.config.CONFIG['connectors']['irc']['username']
+        self.password = lugito.config.CONFIG['connectors']['irc']['password']
+        self.channel = lugito.config.CONFIG['connectors']['irc']['channel']
 
         # Phabricator info
-        self.phab = phabricator.Phabricator()
-        self.phab_host = phabricator.ARCRC['config']['default'].replace(
-            'api/', '')
+        self.phab = phabricator.Phabricator(
+            host=lugito.config.CONFIG['phabricator']['host'],
+            token=lugito.config.CONFIG['phabricator']['token'],)
+        self.phab_host = self.phab.host.replace('api/', '')
 
         self.logger = logging.getLogger('lugito.connector.IRCConnector')
 
@@ -50,14 +52,17 @@ class IRCConnector(object):
         self.logger.addHandler(ch)
         self.logger.setLevel(log_level)
 
+        self.sleep_delay = sleep_delay
 
-    def _send_raw(self, message):
+
+    def _send_raw(self, message): # pragma: no cover
         """Low level send"""
 
         self.conn.send(message.encode('utf-8'))
 
 
-    def _socket_conn(self):
+    def _setup_connection(self):
+        """Setup connection"""
         self.conn = ssl.wrap_socket(
             socket.socket(socket.AF_INET, socket.SOCK_STREAM))
         self.conn.connect((self.host, self.port))
@@ -66,11 +71,11 @@ class IRCConnector(object):
     def connect(self):
         """Connect"""
 
-        self._socket_conn()
+        self.logger.info("Connecting to IRC.")
+        self._setup_connection()
 
         setup = False
         usersuffix = 0
-        self.logger.info("Connecting to IRC.")
 
         while not setup:
             response = self.conn.recv(512).decode("utf-8")
@@ -84,11 +89,11 @@ class IRCConnector(object):
                     self.username, self.password))
 
             if "You are now identified" in response:
-                sleep(5)
+                sleep(self.sleep_delay)
                 self._send_raw("JOIN {}\r\n".format(self.channel))
 
             if "477" in response:
-                sleep(5)
+                sleep(self.sleep_delay)
                 self._send_raw("JOIN {}\r\n".format(self.channel))
 
             if "433" in response:
@@ -106,20 +111,32 @@ class IRCConnector(object):
 
         self.logger.info("Successfully connected to the IRC server.")
 
-    def send_notice(self, message):
+    def send_notice(self, message): # pragma: no cover
         self._send_raw("NOTICE {} :{}\r\n".format(self.channel, message))
 
-    def send(self, objectstr, who, body, link):
+    def send(self, *args, **kwargs):
         """Send a formatted message"""
+
+        if len(args) == 4:
+            objectstr, who, body, link = args
+
+        elif len(kwargs) == 4:
+            objectstr = kwargs['objectstr']
+            who = kwargs['who']
+            body = kwargs['body']
+            link = kwargs['link']
+
+        # else
+        # raise exception
 
         # e.g. [T31: Better IRC integration]
         message = "\x033[\x03\x0313" + objectstr + "\x03\x033]\x03 "
         # e.g. tsimonq2 (Simon Quigley)
-        message = message + "\x0315" + who + "\x03 "
+        message += "\x0315" + who + "\x03 "
         # e.g. commented on the task:
-        message = message + body + ": "
+        message += body + ": "
         # e.g. https://phab.lubuntu.me/T40#779
-        message = message + "\x032" + link + "\x03"
+        message += "\x032" + link + "\x03"
         # Make sure we can debug this if it goes haywire
         self.logger.debug(message)
         # Sleep for a fifth of a second, so when we have a bunch of messages we have a buffer
@@ -127,7 +144,7 @@ class IRCConnector(object):
         # Aaaaand, send it off!
         self.send_notice(message)
 
-    def gettaskinfo(self, task):
+    def get_task_info(self, task):
 
         sendmessage = ""
 
@@ -170,7 +187,7 @@ class IRCConnector(object):
             if color is not None:
                 sendmessage += ", "
 
-            sendmessage +=  taskinfo["statusName"] + "\x03\x033]\x03 "
+            sendmessage += taskinfo["statusName"] + "\x03\x033]\x03 "
 
             # Put the title in there as well.
             sendmessage += taskinfo["title"].strip() + ": "
@@ -189,8 +206,14 @@ class IRCConnector(object):
 
         # If someone wrote something like "Tblah", obviously that's not right.
         except ValueError:
-            self.send_notice("\x034Error: " + task.strip() + "is an invalid task reference.\x03")
-            return None
+
+            if anchor is not None:
+                link = '{}#{}'.format(task.strip(), anchor)
+            else:
+                link = task.strip()
+
+            self.send_notice("\x034Error: " + link +\
+                " is an invalid task reference.\x03")
 
 
     def bot(self, message, msgtype):
@@ -200,7 +223,7 @@ class IRCConnector(object):
 
             for item in message.split():
                 if item.startswith("T") or item.startwith("D"):
-                    self.gettaskinfo(item.strip())
+                    self.get_task_info(item.strip())
 
         elif msgtype == "link":
 
@@ -208,7 +231,7 @@ class IRCConnector(object):
                 if (item.split()[0].strip().startswith("T")) or \
                     (item.split()[0].strip().startswith("D")):
 
-                    self.gettaskinfo(item.split()[0].strip())
+                    self.get_task_info(item.split()[0].strip())
 
         else:
             self.sendnotice("\x034Error: unknown command.\x03")

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """The setup script."""
-# import versioneer
+import versioneer
 from setuptools import setup, find_packages
 
 with open('README.rst') as readme_file:
@@ -29,8 +29,8 @@ test_requirements = [
 ]
 
 setup(
-    author="",
-    author_email='',
+    author="Ben Johnston (docEbrown)",
+    author_email='bjohnston@neomailbox.net',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
@@ -42,11 +42,11 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
     ],
-    description="Python Boilerplate contains all the boilerplate "\
-        "you need to create a Python package.",
+    description="Python package to connect services such as irc and launchpad"\
+        " to Phabricator and provide updates",
     entry_points={
         'console_scripts': [
-            'lugito=lugito.cli:run',
+            'lugito=lugito.webhooks:run',
         ],
     },
     install_requires=requirements,
@@ -60,8 +60,7 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='',
-    version='0.1.0',
     zip_safe=False,
-#    version=versioneer.get_version(),
-#    cmdclass=versioneer.get_cmdclass(),
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
 )

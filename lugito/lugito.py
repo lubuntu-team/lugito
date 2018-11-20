@@ -15,6 +15,7 @@ import hmac
 import http
 import logging
 import phabricator
+import lugito
 from hashlib import sha256
 
 PHAB_WEBHOOK_SIG = "X-Phabricator-Webhook-Signature"
@@ -31,9 +32,12 @@ class Lugito(object):
         Initialise
         """
 
-        self.phab = phabricator.Phabricator()
-        self.HMAC = phabricator.ARCRC['HMAC']
-        self.host = phabricator.ARCRC['config']['default']
+        self.phab = phabricator.Phabricator(
+            host=lugito.config.CONFIG['phabricator']['host'],
+            token=lugito.config.CONFIG['phabricator']['token'],
+        )
+        self.HMAC = lugito.config.CONFIG['phabricator']['hooks']
+        self.host = lugito.config.CONFIG['phabricator']['host']
 
         self.logger = logging.getLogger('lugito.lugito')
 
@@ -51,15 +55,7 @@ class Lugito(object):
             self.HMAC[key] = bytes(u'%s' % val, 'utf-8')
 
 
-    def _transaction_search(self):
-        self.transaction = self.phab.transaction.search(objectIdentifier=
-            self.request_data["object"]["phid"])["data"]
-
-    def _request_data(self, request):
-        self.request_data = json.loads(request.data)
-
-
-    def validate_HMAC(self, hmac_key, request):
+    def validate_request(self, hmac_key, request):
         """
         Check a request originated from Phabricator.  This method must be called
         first to validate a request is from Phabricator before any other method
@@ -86,8 +82,13 @@ class Lugito(object):
 
         # check if from phabricator
         if hash_.hexdigest() == request.headers[PHAB_WEBHOOK_SIG]:
-            self._request_data(request)
-            self._transaction_search()
+
+            # Store the request and transaction
+            self.request_data = json.loads(request.data)
+            self.transaction = self.phab.transaction.search(objectIdentifier=
+                self.request_data["object"]["phid"])["data"]
+
+
             self.logger.info('received phid: %s' %\
                 self.request_data["object"]["phid"])
             return True

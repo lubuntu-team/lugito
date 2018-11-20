@@ -17,7 +17,7 @@ import logging
 import threading
 from flask import Flask, request
 from lugito import Lugito
-from lugito.connectors.irc import IRCConnector
+from lugito.connectors import irc, launchpad
 
 # Constants
 GLOBAL_LOG_LEVEL = logging.DEBUG
@@ -26,7 +26,9 @@ GLOBAL_LOG_LEVEL = logging.DEBUG
 lugito = Lugito(GLOBAL_LOG_LEVEL)
 WEBSITE = lugito.host.replace('/api/', '')
 
-irc_con = IRCConnector()
+# Connectors
+irc_con = irc()
+launchpad_con = launchpad()
 
 # Logging
 logger = logging.getLogger('lugito.webhooks')
@@ -45,11 +47,41 @@ logger.setLevel(GLOBAL_LOG_LEVEL)
 app = Flask('lugito')
 
 
+@app.route("/commithook", methods=["POST"])
+def commithook():
+    """Commit hook"""
+
+    if lugito.validate_request('commithook', request):
+
+        author = lugito.get_author_fullname()
+
+        # Without the author we can't continue
+        if author is None:
+            return 'Ok'
+
+        object_type = lugito.request_data["object"]["type"]
+
+        if object_type == "CMIT":
+            logger.debug("Object is a commit.")
+
+            commit_msg = lugito.get_object_string("fullName").replace(
+                lugito.get_object_string("name") + ": ", "")
+            pkg_name = lugito.get_object_string("name")
+
+
+            launchpad_con.send(pkg_name, commit_msg)
+
+
+    return 'Ok'
+
+
+
+
 @app.route("/irc", methods=["POST"])
 def _main():
     """Main route"""
 
-    if lugito.validate_HMAC('irc', request):
+    if lugito.validate_request('irc', request):
 
         author = lugito.get_author_fullname()
 
@@ -136,6 +168,7 @@ def _main():
 
 def run():
     irc_con.connect()
+    launchpad_con.connect()
     t = threading.Thread(target=irc_con.listen)
     t.daemon = True
     t.start()

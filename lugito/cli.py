@@ -13,7 +13,6 @@
 # Imports
 
 
-from lugito.webhooks import run
-
 if __name__ == "__main__":
+    from lugito.webhooks import run
     run()

@@ -12,6 +12,7 @@ import pytest
 import phabricator
 import json
 import http
+import lugito
 from lugito import Lugito
 from unittest.mock import MagicMock
 
@@ -19,11 +20,33 @@ from unittest.mock import MagicMock
 
 TEST_DIR = os.path.dirname(__file__)
 
-# Force phabricator to use the ./tests/.arcconfig file
-TEST_CONFIG = os.path.join(TEST_DIR, '.arcconfig')
+# Apply default values
+lugito.config.CONFIG = {
+    'phabricator': {
+        'host': 'http://127.0.0.1:9091/api/',
+        'token': 'api-nojs2ip33hmp4zn6u6cf72w7d6yh',
+        'hooks': {
+            'diffhook': 'vglzi6t4gsumnilv27r27no7rs3vgs75',
+            'commithook': 'znkyfflbcia5gviqx5ybad7s6uyfywxi',
+            },
+        },
+    'connectors': {
+        'irc': {
+            'host': 'irc.freenode.net',
+            'port': '6697',
+            'username': 'someusername',
+            'password': 'somepassword',
+            'channel': '#somechannel',
+        },
+    'launchpad': {
+        'application': 'lugito',
+        'staging': 'production',
+        'version': 'devel',
+        'supported_versions': ['Cosmic', 'Bionic', 'Xenial', 'Trusty'],
+        },
+    },
+}
 
-with open(TEST_CONFIG, 'r') as f:
-    phabricator.ARCRC = json.load(f)
 
 # Pre-prepared request
 FAKE_REQUEST = os.path.join(TEST_DIR, 'request.json')
@@ -56,10 +79,12 @@ def test_init():
         'utf-8'))
 
 
-def test_validate_HMAC():
+def test_validate_request():
     """Test validating HMAC"""
 
     obj = Lugito()
+    obj.phab = MagicMock()
+    obj.phab.transaction.search = MagicMock()
 
     request_mock = MagicMock()
 
@@ -71,7 +96,8 @@ def test_validate_HMAC():
         "a8f636f03ed4464ddb398ea873ffab409d941f87396f28fa9d22bb58cfbedc9f"
     }
 
-    assert(obj.validate_HMAC('diffhook', request_mock))
+    assert(obj.validate_request('diffhook', request_mock))
+    assert(obj.phab.transaction.search.is_called())
 
 
 def test_invalid_HMAC():
@@ -89,7 +115,7 @@ def test_invalid_HMAC():
         "a8f6364464ddb398ea873ffab409d941f87396f28fa9d22bb58cfbedc9f"
     }
 
-    assert(not obj.validate_HMAC('diffhook', request_mock))
+    assert(not obj.validate_request('diffhook', request_mock))
 
 
 def test_author_fullname():
@@ -140,8 +166,6 @@ def test_get_object_type():
 
     with open(FAKE_REQ_DATA, 'r') as f:
         obj.request_data = json.load(f)
-
-    obj._transaction_search()
 
     assert(obj.get_object_type() == 'DREV')
 

@@ -5,9 +5,9 @@ Credits
 Development Lead
 ----------------
 
-* Ben Johnston <bjohnston@neomailbox.net>
+* Simon Quigley
 
 Contributors
-------------
+-----------
 
-None yet. Why not be the first?
+* Ben Johnston (docEbrown) <bjohnston@neomailbox.net>

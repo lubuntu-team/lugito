@@ -1,0 +1,23 @@
+[phabricator]
+host = http://127.0.0.1/api/
+
+[phabricator.hooks]
+diffhook = vglzi6t4gsumnilv27r27no7rs3vgs75
+commithook = znkyfflbcia5gviqx5ybad7s6uyfywxi
+
+[connector.irc]
+host = irc.freenode.net
+port  = 6697
+username = someusername
+password = somepassword
+channel = #somechannel
+
+[connector.launchpad]
+application = lugito
+staging = production
+version = devel
+supported_versions =
+    Cosmic
+    Bionic
+    Xenial
+    Trusty
