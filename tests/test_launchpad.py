@@ -22,6 +22,14 @@ lugito.config.CONFIG = {
             'diffhook': 'vglzi6t4gsumnilv27r27no7rs3vgs75',
             'commithook': 'znkyfflbcia5gviqx5ybad7s6uyfywxi',
             },
+        'package_names': {
+            'rDEFAULTSETTINGS': 'lubuntu-default-settings',
+            'rART': 'lubuntu-artwork',
+            'rCALASETTINGS': 'calamares-settings-ubuntu',
+            'rQTERMINALPACKAGING': 'qterminal',
+            'rLXQTCONFIGPACKAGING': 'lxqt-config',
+            'rNMTRAYPACKAGING': 'nm-tray',
+            },
         },
     'connectors': {
         'irc': {
@@ -36,14 +44,6 @@ lugito.config.CONFIG = {
         'staging': 'production',
         'version': 'devel',
         'supported_versions': ['Cosmic', 'Bionic', 'Xenial', 'Trusty'],
-        'package_names': {
-            'rDEFAULTSETTINGS': 'lubuntu-default-settings',
-            'rART': 'lubuntu-artwork',
-            'rCALASETTINGS': 'calamares-settings-ubuntu',
-            'rQTERMINALPACKAGING': 'qterminal',
-            'rLXQTCONFIGPACKAGING': 'lxqt-config',
-            'rNMTRAYPACKAGING': 'nm-tray',
-            },
         },
     },
 }

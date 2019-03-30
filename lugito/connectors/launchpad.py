@@ -44,8 +44,7 @@ class launchpad(object):
             lugito.config.CONFIG['connectors']\
             ['launchpad']['supported_versions']
         self.package_names =\
-            lugito.config.CONFIG['connectors']\
-            ['launchpad']['package_names']
+            lugito.config.CONFIG['phabricator']['package_names']
 
 
         # Phabricator info

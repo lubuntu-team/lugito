@@ -22,38 +22,42 @@ Temp - Example .lugitorc
 
 .. code::
 
-    [phabricator]
-    host = http://127.0.0.1:9091/api/
-    token = api-nojs2ip33hmp4zn6u6cf72w7d6yh
+   [phabricator]
+   host = http://127.0.0.1:9091/api/
+   token = api-nojs2ip33hmp4zn6u6cf72w7d6yh
 
-    [phabricator.hooks]
-    irc = cqg42zdcuqysff632kc6rnsu4m3hjg6c
-    commithook = znkyfflbcia5gviqx5ybad7s6uyfywxi
+   [phabricator.hooks]
+   irc = cqg42zdcuqysff632kc6rnsu4m3hjg6c
+   commithook = znkyfflbcia5gviqx5ybad7s6uyfywxi
 
-    [connector.irc]
-    host = irc.freenode.net
-    port  = 6697
-    username = someusername
-    password = somepassword
-    channel = #somechannel
+   [phabricator.package_names]
+   rDEFAULTSETTINGS = lubuntu-default-settings
+   rART = lubuntu-artwork
+   rCALASETTINGS = calamares-settings-ubuntu
+   rQTERMINALPACKAGING = qterminal
+   rLXQTCONFIGPACKAGING = lxqt-config
+   rNMTRAYPACKAGING = nm-tray
 
-    [connector.launchpad]
-    application = lugito
-    staging = production
-    version = devel
-    supported_versions =
-        Cosmic
-        Bionic
-        Xenial
-        Trusty
+   [jenkins]
+   site = https://ci.lubuntu.me
+   template_url = ssh://git@phab.lubuntu.me:2222/source/PACKAGE.git
 
-    [connector.launchpad.package_names]
-    rDEFAULTSETTINGS = lubuntu-default-settings
-    rART = lubuntu-artwork
-    rCALASETTINGS = calamares-settings-ubuntu
-    rQTERMINALPACKAGING = qterminal
-    rLXQTCONFIGPACKAGING = lxqt-config
-    rNMTRAYPACKAGING = nm-tray
+   [connector.irc]
+   host = irc.freenode.net
+   port  = 6697
+   username = someusername
+   password = somepassword
+   channel = #somechannel
+
+   [connector.launchpad]
+   application = lugito
+   staging = production
+   version = devel
+   supported_versions =
+       Cosmic
+       Bionic
+       Xenial
+       Trusty
 
 
 

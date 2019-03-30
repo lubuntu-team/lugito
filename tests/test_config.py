@@ -48,6 +48,15 @@ def test_loading_config_hooks():
         'vglzi6t4gsumnilv27r27no7rs3vgs75')
     assert(CONFIG['phabricator']['hooks']['commithook'] ==\
         'znkyfflbcia5gviqx5ybad7s6uyfywxi')
+    assert(CONFIG['phabricator']['package_names'] ==\
+        {
+            'rDEFAULTSETTINGS': 'lubuntu-default-settings',
+            'rART': 'lubuntu-artwork',
+            'rCALASETTINGS': 'calamares-settings-ubuntu',
+            'rQTERMINALPACKAGING': 'qterminal',
+            'rLXQTCONFIGPACKAGING': 'lxqt-config',
+            'rNMTRAYPACKAGING': 'nm-tray',
+        })
 
 
 def test_loading_config_connectors():
@@ -71,14 +80,6 @@ def test_loading_config_connectors():
         'staging': 'production',
         'version': 'devel',
         'supported_versions': ['Cosmic', 'Bionic', 'Xenial', 'Trusty'],
-        'package_names': {
-            'rDEFAULTSETTINGS': 'lubuntu-default-settings',
-            'rART': 'lubuntu-artwork',
-            'rCALASETTINGS': 'calamares-settings-ubuntu',
-            'rQTERMINALPACKAGING': 'qterminal',
-            'rLXQTCONFIGPACKAGING': 'lxqt-config',
-            'rNMTRAYPACKAGING': 'nm-tray',
-        },
         }):
         import pdb;pdb.set_trace()
 

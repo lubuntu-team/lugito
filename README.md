@@ -25,6 +25,18 @@ token = api-nojs2ip33hmp4zn6u6cf72w7d6yh
 irc = cqg42zdcuqysff632kc6rnsu4m3hjg6c
 commithook = znkyfflbcia5gviqx5ybad7s6uyfywxi
 
+[phabricator.package_names]
+rDEFAULTSETTINGS = lubuntu-default-settings
+rART = lubuntu-artwork
+rCALASETTINGS = calamares-settings-ubuntu
+rQTERMINALPACKAGING = qterminal
+rLXQTCONFIGPACKAGING = lxqt-config
+rNMTRAYPACKAGING = nm-tray
+
+[jenkins]
+site = https://ci.lubuntu.me
+template_url = ssh://git@phab.lubuntu.me:2222/source/PACKAGE.git
+
 [connector.irc]
 host = irc.freenode.net
 port  = 6697
@@ -41,14 +53,6 @@ supported_versions =
     Bionic
     Xenial
     Trusty
-
-[connector.launchpad.package_names]
-rDEFAULTSETTINGS = lubuntu-default-settings
-rART = lubuntu-artwork
-rCALASETTINGS = calamares-settings-ubuntu
-rQTERMINALPACKAGING = qterminal
-rLXQTCONFIGPACKAGING = lxqt-config
-rNMTRAYPACKAGING = nm-tray
 ```
 
 Features

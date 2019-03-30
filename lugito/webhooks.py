@@ -17,7 +17,7 @@ import logging
 import threading
 from flask import Flask, request
 from lugito import Lugito
-from lugito.connectors import irc, launchpad
+from lugito.connectors import irc, launchpad, jenkins
 
 # Constants
 GLOBAL_LOG_LEVEL = logging.DEBUG
@@ -29,6 +29,7 @@ WEBSITE = lugito.host.replace('/api/', '')
 # Connectors
 irc_con = irc()
 launchpad_con = launchpad()
+jenkins_con = jenkins()
 
 # Logging
 logger = logging.getLogger('lugito.webhooks')
@@ -73,8 +74,6 @@ def commithook():
 
 
     return 'Ok'
-
-
 
 
 @app.route("/irc", methods=["POST"])
@@ -162,6 +161,29 @@ def _main():
 
         if send_msg:
             irc_con.send(objectstr, author, body, link)
+
+    return 'Ok'
+
+
+@app.route("/jenkins", methods=["POST"])
+def jenkinstrigger():
+    """Jenkins trigger"""
+
+    if lugito.validate_request('jenkins', request):
+
+        author = lugito.get_author_fullname()
+
+        # Without the author we can't continue
+        if author is None:
+            return 'Ok'
+
+        object_type = lugito.request_data["object"]["type"]
+
+        if object_type == "CMIT":
+            logger.debug("Object is a commit.")
+
+            jenkins_con.send(pkg_name)
+
 
     return 'Ok'
 
