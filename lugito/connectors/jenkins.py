@@ -19,7 +19,7 @@ import requests
 from string import Template
 
 
-class launchpad(object):
+class jenkins(object):
 
     def __init__(self, log_level=logging.DEBUG):
 
@@ -35,9 +35,10 @@ class launchpad(object):
         )
 
         # Jenkins info
-        self.jenkins_site = lugito.config.CONFIG['jenkins']['site']
-        self.jenkins_trigger_url = lugito.config.CONFIG['jenkins']\
-            ['template_url']
+        self.jenkins_site = lugito.config.CONFIG['connectors']['jenkins']\
+            ['site']
+        self.jenkins_trigger_url = lugito.config.CONFIG['connectors']\
+            ['jenkins']['template_url']
 
         self.phab_host = lugito.config.CONFIG['phabricator']['host'].replace(
             'api/', '')

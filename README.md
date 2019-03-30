@@ -33,10 +33,6 @@ rQTERMINALPACKAGING = qterminal
 rLXQTCONFIGPACKAGING = lxqt-config
 rNMTRAYPACKAGING = nm-tray
 
-[jenkins]
-site = https://ci.lubuntu.me
-template_url = ssh://git@phab.lubuntu.me:2222/source/PACKAGE.git
-
 [connector.irc]
 host = irc.freenode.net
 port  = 6697
@@ -53,6 +49,10 @@ supported_versions =
     Bionic
     Xenial
     Trusty
+
+[connector.jenkins]
+site = https://ci.lubuntu.me
+template_url = ssh://git@phab.lubuntu.me:2222/source/package.git
 ```
 
 Features
