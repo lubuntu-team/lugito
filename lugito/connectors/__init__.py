@@ -9,3 +9,7 @@ from lugito.connectors.irc import (
 from lugito.connectors.launchpad import (
     launchpad,
 )
+
+from lugito.connectors.jenkins import (
+    jenkins,
+)
