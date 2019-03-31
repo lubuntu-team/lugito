@@ -72,12 +72,16 @@ def update_config(config_file=DEFAULT_CONFIG_FILE):
     CONFIG['phabricator']['token'] = config['phabricator']['token']
 
     CONFIG['phabricator']['hooks'] = {}
+    CONFIG['phabricator']['package_names'] = {}
 
     # Iterate through hooks for HMAC keys
     if 'phabricator.hooks' in config:
-
         for key, value in config['phabricator.hooks'].items():
             CONFIG['phabricator']['hooks'][key] = value
+
+    if 'phabricator.package_names' in config:
+        for key, value in config['phabricator.package_names'].items():
+            CONFIG['phabricator']['package_names'][key] = value
 
     CONFIG['connectors'] = {}
 
