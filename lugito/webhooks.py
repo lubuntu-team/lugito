@@ -178,7 +178,7 @@ def jenkinstrigger():
             return 'Ok'
 
         object_type = lugito.request_data["object"]["type"]
-        pkg_name = lugito.get_object_string("name")
+        pkg_name = lugito.get_repository_name()
 
         if object_type == "CMIT":
             logger.debug("Object is a commit.")
