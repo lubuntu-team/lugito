@@ -160,14 +160,14 @@ class Lugito(object):
     def get_repository_name(self): #pragma: no cover
         # Get the commit PHID and search it
         commit_phid = self.request_data["object"]["phid"]
-        commit = phab.diffusion.commit.search(
+        commit = self.phab.diffusion.commit.search(
             constraints={"phids": [commit_phid]})
 
         # Grab the repository PHID from the query results
         repo_phid = commit["data"][0]["fields"]["repositoryPHID"]
 
         # Using the repo PHID we just grabbed, get the name of it
-        repo_name = phab.phid.query(phids=[repo_phid])[repo_phid]["name"]
+        repo_name = self.phab.phid.query(phids=[repo_phid])[repo_phid]["name"]
         return repo_name
 
 
