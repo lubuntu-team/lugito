@@ -76,7 +76,7 @@ class jenkins(object):
 
         # Get the package name we'll be triggering; this assumes the repo
         # name always matches the package name
-        package_name = self.get_package_name(package_name)
+        package_name = self.get_package_name(package_name.lower())
 
         if package_name:
             package_url = self.jenkins_trigger_url.replace(

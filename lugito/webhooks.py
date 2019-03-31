@@ -183,7 +183,7 @@ def jenkinstrigger():
         if object_type == "CMIT":
             logger.debug("Object is a commit.")
 
-            jenkins_con.send(pkg_name)
+            jenkins_con.send(package_name=pkg_name)
 
 
     return 'Ok'
