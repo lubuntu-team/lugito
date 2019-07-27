@@ -14,8 +14,7 @@ with open('HISTORY.rst') as history_file:
 requirements = [
     'Click>=6.0',
     'Flask>=1.0.2',
-    'httplib2==0.11.3', # BJ - Currently the latest version of httplib2 (0.12.0)
-    # is not compatible with launchpadlib
+    'httplib2>=0.12.1',
     'launchpadlib>=1.10.6',
     'phabricator>=0.7.0',
     'versioneer>=0.18',

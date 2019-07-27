@@ -24,11 +24,11 @@ lugito.config.CONFIG = {
             },
         'package_names': {
             'rDEFAULTSETTINGS': 'lubuntu-default-settings',
-            'rART': 'lubuntu-artwork',
+            'rart': 'lubuntu-artwork',
             'rCALASETTINGS': 'calamares-settings-ubuntu',
             'rQTERMINALPACKAGING': 'qterminal',
             'rLXQTCONFIGPACKAGING': 'lxqt-config',
-            'rNMTRAYPACKAGING': 'nm-tray',
+            'rnmtraypackaging': 'nm-tray',
             },
         },
     'connectors': {
@@ -61,14 +61,21 @@ def test_init():
     assert(obj.staging == "production")
     assert(obj.version == "devel")
     assert(obj.supported_vers == ["Cosmic", "Bionic", "Xenial", "Trusty"])
-    assert(obj.package_names == {
-        'rDEFAULTSETTINGS': 'lubuntu-default-settings',
-        'rART': 'lubuntu-artwork',
-        'rCALASETTINGS': 'calamares-settings-ubuntu',
-        'rQTERMINALPACKAGING': 'qterminal',
-        'rLXQTCONFIGPACKAGING': 'lxqt-config',
-        'rNMTRAYPACKAGING': 'nm-tray',
-    })
+
+    assert(obj.package_names['rdefaultsettings'] ==\
+        'lubuntu-default-settings')
+    assert(obj.package_names['rart'] ==\
+        'lubuntu-artwork')
+    assert(obj.package_names['rcalasettings'] ==\
+        'calamares-settings-ubuntu')
+    assert(obj.package_names['rqterminalpackaging'] ==\
+        'qterminal')
+    assert(obj.package_names['rlxqtconfigpackaging'] ==\
+        'lxqt-config')
+    assert(obj.package_names['rnmtraypackaging'] ==\
+        'nm-tray')
+
+
 
 
 def test_get_package_name():
@@ -76,7 +83,7 @@ def test_get_package_name():
 
     obj = launchpad()
 
-    assert(obj.get_package_name('rART') == 'lubuntu-artwork')
+    assert(obj.get_package_name('rart') == 'lubuntu-artwork')
     assert(obj.get_package_name('rT') is None)
 
 
@@ -85,7 +92,7 @@ def test_get_package_name():
 
     obj = launchpad()
 
-    assert(obj.get_package_name('rNMTRAYPACKAGING') == 'nm-tray')
+    assert(obj.get_package_name('rnmtraypackaging') == 'nm-tray')
     assert(obj.get_package_name('rNMTRKAGING') is None)
 
 

@@ -48,15 +48,20 @@ def test_loading_config_hooks():
         'vglzi6t4gsumnilv27r27no7rs3vgs75')
     assert(CONFIG['phabricator']['hooks']['commithook'] ==\
         'znkyfflbcia5gviqx5ybad7s6uyfywxi')
-    assert(CONFIG['phabricator']['package_names'] ==\
-        {
-            'rDEFAULTSETTINGS': 'lubuntu-default-settings',
-            'rART': 'lubuntu-artwork',
-            'rCALASETTINGS': 'calamares-settings-ubuntu',
-            'rQTERMINALPACKAGING': 'qterminal',
-            'rLXQTCONFIGPACKAGING': 'lxqt-config',
-            'rNMTRAYPACKAGING': 'nm-tray',
-        })
+
+    # Package names
+    assert(CONFIG['phabricator']['package_names']['rdefaultsettings'] ==\
+        'lubuntu-default-settings')
+    assert(CONFIG['phabricator']['package_names']['rart'] ==\
+        'lubuntu-artwork')
+    assert(CONFIG['phabricator']['package_names']['rcalasettings'] ==\
+        'calamares-settings-ubuntu')
+    assert(CONFIG['phabricator']['package_names']['rqterminalpackaging'] ==\
+        'qterminal')
+    assert(CONFIG['phabricator']['package_names']['rlxqtconfigpackaging'] ==\
+        'lxqt-config')
+    assert(CONFIG['phabricator']['package_names']['rnmtraypackaging'] ==\
+        'nm-tray')
 
 
 def test_loading_config_connectors():

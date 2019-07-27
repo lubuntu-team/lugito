@@ -23,10 +23,14 @@ supported_versions =
     Xenial
     Trusty
 
-[connector.launchpad.package_names]
+[phabricator.package_names]
 rDEFAULTSETTINGS = lubuntu-default-settings
 rART = lubuntu-artwork
 rCALASETTINGS = calamares-settings-ubuntu
 rQTERMINALPACKAGING = qterminal
 rLXQTCONFIGPACKAGING = lxqt-config
 rNMTRAYPACKAGING = nm-tray
+
+[connector.jenkins]
+site = https://ci.lubuntu.me
+template_url = ssh://git@phab.lubuntu.me:2222/source/package.git
