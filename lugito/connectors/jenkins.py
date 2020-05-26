@@ -48,6 +48,8 @@ class jenkins(object):
 
         self.logger = logging.getLogger('lugito.connector.jenkins')
 
+        self.jenkins = self.auth_jenkins()
+
         # Add log level
         ch = logging.StreamHandler()
 
@@ -110,18 +112,11 @@ class jenkins(object):
 
         status = None
 
-        # Authenticate with the server
-        jenkins = self.auth_jenkins()
+        print("Getting project")
 
-        # Check if the project name matches a valid one on the server
-        # If it does, grab the job info, if it doesn't, stop
-        proj = None
-        for job in jenkins.get_jobs():
-            if job[0] == proj_name:
-                proj = job
-
-        if not proj:
-            return status
+        # If the server has the job, use it
+        if self.jenkins.has_job(proj_name):
+            proj = (proj_name, self.jenkins.get_job(proj_name))
 
         # Get the status of the last completed build if there isone
         try:
@@ -137,7 +132,9 @@ class jenkins(object):
 
         # If it has been consistently stable, don't cause extra noise
         if status == "SUCCESS" and last_status == status:
-            return None
+            return proj[0], None, url
+
+        print("Customizing build status")
 
         # Customize the message depending on the previous build status
         if status == "SUCCESS":

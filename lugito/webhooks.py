@@ -189,15 +189,25 @@ def jenkinstrigger():
     return 'Ok'
 
 
+def processjenkinsircnotify(request):
+    """Process the request given so it can be daemonized"""
+
+    # Get the status of the most recent build to the given project
+    proj, status, link = jenkins_con.receive(request)
+
+    if status:
+        irc_con.send("Lubuntu CI", proj, status, link)
+
+
 @app.route("/jenkinsnag", methods=["POST"])
 def jenkinsircnotify():
     """Jenkins IRC notifications"""
 
-    # Get the status of the most recent build to the given project
-    proj, status, link = jenkins_con.receive(request.data)
-
-    if status:
-        irc_con.send("Lubuntu CI", proj, status, link)
+    print("Processing request")
+    send_notification = threading.Thread(
+            target=processjenkinsircnotify, args=[request.data])
+    send_notification.setDaemon(True)
+    send_notification.start()
 
     return 'Ok'
 
