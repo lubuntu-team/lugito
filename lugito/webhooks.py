@@ -189,6 +189,17 @@ def jenkinstrigger():
     return 'Ok'
 
 
+@app.route("/jenkinsnag", methods=["POST"])
+def jenkinsircnotify():
+    """Jenkins IRC notifications"""
+
+    # Get the status of the most recent build to the given project
+    proj, status, link = jenkins_con.receive(request.data)
+
+    if status:
+        irc_con.send("Lubuntu CI", proj, status, link)
+
+
 def run():
     irc_con.connect()
     launchpad_con.connect()

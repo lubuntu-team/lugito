@@ -16,6 +16,9 @@ import logging
 import phabricator
 import lugito
 import requests
+import json
+import jenkinsapi.custom_exceptions
+from jenkinsapi.jenkins import Jenkins
 from string import Template
 
 
@@ -86,6 +89,47 @@ class jenkins(object):
 
             self.logger.debug("Sent to Jenkins: {} {}".format(
                 r.status_code, r.reason))
+
+
+    def auth_jenkins(self):
+        """Authenticate with the Jenkins server"""
+
+        site = lugito.config.CONFIG["connectors"]["jenkins"]["site"]
+        user = lugito.config.CONFIG["connectors"]["jenkins"]["user"]
+        key = lugito.config.CONFIG["connectors"]["jenkins"]["api_key"]
+
+        server = Jenkins(site, username=user, password=key)
+
+        return server
+
+
+    def receive(self, proj_name):
+        """Receive the project name and return the status of the last build"""
+
+        proj_name = json.loads(proj_name)["PROJECT"]
+
+        status = None
+
+        # Authenticate with the server
+        jenkins = self.auth_jenkins()
+
+        # Check if the project name matches a valid one on the server
+        # If it does, grab the job info, if it doesn't, stop
+        proj = None
+        for job in jenkins.get_jobs():
+            if job[0] == proj_name:
+                proj = job
+
+        if not proj:
+            return status
+
+        # Return the status of the last completed build
+        try:
+            status = proj[1].get_last_completed_build().get_status()
+            url = proj[1].get_last_completed_build().get_build_url()
+            return proj[0], status, url
+        except jenkinsapi.custom_exceptions.NoBuildData:
+            return None
 
 
     def listen(self):
