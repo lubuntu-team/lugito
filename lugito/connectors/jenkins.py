@@ -123,13 +123,49 @@ class jenkins(object):
         if not proj:
             return status
 
-        # Return the status of the last completed build
+        # Get the status of the last completed build if there isone
         try:
+            # Get the data from Jenkins
             status = proj[1].get_last_completed_build().get_status()
             url = proj[1].get_last_completed_build().get_build_url()
-            return proj[0], status, url
         except jenkinsapi.custom_exceptions.NoBuildData:
             return None
+
+        # Get the status of <current build> - 1
+        last_status = proj[1].get_build(proj[1].get_last_buildnumber() - 1)
+        last_status = last_status.get_status()
+
+        # If it has been consistently stable, don't cause extra noise
+        if status == "SUCCESS" and last_status == status:
+            return None
+
+        # Customize the message depending on the previous build status
+        if status == "SUCCESS":
+            if last_status == "FAILURE":
+                status = "just succeeded after failing"
+            elif last_status == "UNSTABLE":
+                status = "just became stable"
+            # Color it green
+            status = "\x033" + status + "\x03"
+        elif status == "FAILURE":
+            if last_status == "SUCCESS":
+                status = "just failed after succeeding"
+            elif last_status == "UNSTABLE":
+                status = "just failed after being unstable"
+            # Color it red
+            status = "\x034" + status + "\x03"
+        elif status == "UNSTABLE":
+            if last_status == "SUCCESS":
+                status = "just became unstable"
+            elif last_status == "FAILURE":
+                status = "just became unstable after failing"
+            # Color it yellow
+            status = "\x038" + status + "\x03"
+        elif status == "ABORTED":
+            # Color it gray
+            status = "\x0315" + status + "\x03"
+
+        return proj[0], status, url
 
 
     def listen(self):

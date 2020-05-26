@@ -199,6 +199,8 @@ def jenkinsircnotify():
     if status:
         irc_con.send("Lubuntu CI", proj, status, link)
 
+    return 'Ok'
+
 
 def run():
     irc_con.connect()
