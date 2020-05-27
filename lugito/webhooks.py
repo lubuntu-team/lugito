@@ -16,6 +16,7 @@ Lugito webhooks
 import logging
 import threading
 from flask import Flask, request
+from time import sleep
 from lugito import Lugito
 from lugito.connectors import irc, launchpad, jenkins
 
@@ -191,6 +192,8 @@ def jenkinstrigger():
 
 def processjenkinsircnotify(request):
     """Process the request given so it can be daemonized"""
+
+    sleep(10)
 
     # Get the status of the most recent build to the given project
     proj, status, link = jenkins_con.receive(request)
